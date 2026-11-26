@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Philippine Population Analytics</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-icon">PH</div><div><b>POPULATION</b><small>ANALYTICS SYSTEM</small></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <a class="nav active" href="#overview">▦ <span>Dashboard</span></a>
+    <a class="nav" href="#analytics">▥ <span>Analytics</span></a>
+    <a class="nav" href="#models">◈ <span>Machine Learning</span></a>
+    <a class="nav" href="#forecast">⌁ <span>Forecasting</span></a>
+    <a class="nav" href="#dataset">▤ <span>City Dataset</span></a>
+    <div class="sidebar-bottom"><span class="status-dot"></span> Local server connected</div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div><span class="eyebrow">POPULATION INTELLIGENCE</span><h1>Philippine Cities Dashboard</h1><p>Explore population trends, analytics, and machine learning results.</p></div><div class="top-tag">DATASET · 2010–2024</div></header>
+    {% if model_error %}<div class="notice">Machine learning setup warning: {{ model_error }}</div>{% endif %}
+    <section id="overview">
+      <div class="section-heading"><div><h2>Overview</h2><p>Key indicators from the cleaned city dataset</p></div><span class="live"><i></i> DATA LOADED</span></div>
+      <div class="stats">
+        <article class="stat"><div class="stat-icon blue">▦</div><span>Total city records</span><strong id="cityCount">—</strong><small>Rows in cleaned dataset</small></article>
+        <article class="stat"><div class="stat-icon green">♙</div><span>Combined 2024 population</span><strong id="totalPop">—</strong><small>Population across records</small></article>
+        <article class="stat"><div class="stat-icon violet">⌁</div><span>Average city population</span><strong id="avgPop">—</strong><small>2024 average</small></article>
+        <article class="stat"><div class="stat-icon orange">◈</div><span>ML classification models</span><strong>4</strong><small>Trained and evaluated</small></article>
+      </div>
+    </section>
+    <section id="analytics">
+      <div class="section-heading"><div><h2>Descriptive Analytics</h2><p>Population distribution and city comparisons</p></div></div>
+      <div class="chart-grid">
+        <article class="panel wide"><div class="panel-head"><div><h3>Population trend</h3><p>Total population across available years</p></div><span class="pill">2010–2024</span></div><div class="chart-wrap"><canvas id="trendChart"></canvas></div></article>
+        <article class="panel"><div class="panel-head"><div><h3>Top 10 cities</h3><p>Highest 2024 population values</p></div></div><div class="chart-wrap tall"><canvas id="topChart"></canvas></div></article>
+      </div>
+    </section>
+    <section id="models">
+      <div class="section-heading"><div><h2>Machine Learning Performance</h2><p>Classification results evaluated on a held-out test set</p></div></div>
+      <div class="table-panel">
+        <div class="panel-head"><div><h3>Model comparison</h3><p>Accuracy, precision, recall, F1-score and ROC-AUC</p></div></div>
+        <div class="table-scroll"><table><thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-score</th><th>ROC-AUC</th></tr></thead><tbody id="modelRows"></tbody></table></div>
+      </div>
+      <div class="chart-grid two">
+        <article class="panel"><div class="panel-head"><div><h3>ROC curves by algorithm</h3><p>Each classifier has its own colored curve; closer to the top-left is better.</p></div></div><div class="chart-wrap"><canvas id="rocChart"></canvas></div></article>
+        <article class="panel"><div class="panel-head"><div><h3>Confusion matrix</h3><p>Select a model to inspect its test results</p></div><select id="matrixSelect"></select></div><div id="matrix" class="matrix-area"></div></article>
+      </div>
+      <article class="panel regression-panel"><div><h3>SVR Regression Results</h3><p>Predicting 2024 population using 2010, 2015, 2020 population and land area.</p></div><div class="regression-metrics"><div><small>Root Mean Squared Error</small><b id="rmse">—</b></div><div><small>R-squared (R²)</small><b id="r2">—</b></div></div><p class="footnote">Regression metrics are calculated from the current dataset split. R² can be negative when predictions perform worse than a mean baseline.</p></article>
+    </section>
+    <section id="forecast">
+      <div class="section-heading"><div><h2>Population Forecasting</h2><p>Recursive Decision Tree projections for 2025–2030</p></div></div>
+      <article class="panel"><div class="panel-head"><div><h3>Forecast explorer</h3><p>Choose a city record to view its projected population</p></div><select id="forecastSelect"></select></div><div class="chart-wrap"><canvas id="forecastChart"></canvas></div><p class="footnote">Forecasts are model-based estimates, not official population counts. They follow the recursive Decision Tree method in the supplied notebook.</p></article>
+    </section>
+    <section id="predictor">
+      <div class="section-heading"><div><h2>Population Class Predictor</h2><p>Enter city indicators and compare the four classifiers</p></div></div>
+      <article class="panel predictor-panel">
+        <form id="predictForm" class="predict-form">
+          <label>2020 Population<input type="number" id="p2020" min="0" required placeholder="e.g. 250000"></label>
+          <label>Land Area (km²)<input type="number" id="area" min="0.01" step="any" required placeholder="e.g. 120.5"></label>
+          <label>2020 Population Density<input type="number" id="density" min="0" required placeholder="e.g. 1500"></label>
+          <button type="submit">Run prediction ↗</button>
+        </form><div id="predictionResults" class="prediction-results">Your prediction results will appear here.</div>
+      </article>
+    </section>
+    <section id="dataset">
+      <div class="section-heading"><div><h2>City Dataset</h2><p>Search the current dataset or upload your own CSV.</p></div><input id="searchInput" class="search" placeholder="Search city ID or values..."></div>
+      <article class="panel upload-panel">
+        <div class="upload-copy"><h3>Upload a CSV dataset</h3><p>Your uploaded file becomes the active dataset for the dashboard, model comparison, ROC curves, predictions, and forecasts.</p></div>
+        <form id="uploadForm" class="upload-form">
+          <label class="file-picker">Choose CSV<input type="file" id="csvFile" name="file" accept=".csv,text/csv" required></label>
+          <button type="submit" id="uploadButton">Upload and analyze</button>
+        </form>
+        <div id="uploadStatus" class="upload-status" role="status" aria-live="polite">Required columns: city_id, pop_2010, pop_2015, pop_2020, pop_2024, land_area_km2, dens_2010, dens_2015, dens_2020. Include at least 8 complete city rows.</div>
+      </article>
+      <article class="table-panel"><div class="table-scroll"><table><thead><tr><th>City ID</th><th>Pop. 2010</th><th>Pop. 2015</th><th>Pop. 2020</th><th>Pop. 2024</th><th>Land Area km²</th><th>Density 2020</th></tr></thead><tbody id="dataRows"></tbody></table></div><div class="table-foot" id="rowCount"></div></article>
+    </section>
+    <footer>Philippine Cities Population Analytics · Built with Python, Flask and Scikit-learn</footer>
+  </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body></html>
